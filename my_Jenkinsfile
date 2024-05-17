@@ -51,7 +51,7 @@ pipeline {
          }
    stage('Configuring and deploying using ansible') {
       steps {
-            sh 'ansible-playbook insurance.yaml'
+            sh 'sudo ansible-playbook insurance.yaml'
             
             }
         
