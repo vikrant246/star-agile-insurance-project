@@ -32,7 +32,5 @@
         name: docker
         state: started
         enabled: true
-    - name: deleting and removing old container
-      command: docker rm $(docker ps -a -q) -f
     - name: Deploy Docker Container
       command: docker run -itd -p 8084:8081 vikrant246/insureimg:1.0
