@@ -1,0 +1,60 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Clone Git Repository
+      run: echo 'cloning git repo'
+
+    - name: Compile Code
+      run: mvn compile
+
+    - name: Clean Code
+      run: mvn clean
+
+    - name: Package Code
+      run: mvn package
+
+    - name: Publish Test Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: target/surefire-reports/index.html
+
+    - name: Build Docker Image
+      run: |
+        sudo docker build -t vikrant246/insureimg:1.0 .
+
+    - name: Login to DockerHub
+      env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+        echo "${DOCKER_PASSWORD}" | sudo docker login -u "${DOCKER_USERNAME}" --password-stdin
+
+    - name: Push Docker Image
+      run: |
+        sudo docker push vikrant246/insureimg:1.0
+
+    - name: Configure and Deploy Using Ansible
+      env:
+        ANSIBLE_HOST_KEY_CHECKING: "false"
+        ANSIBLE_INVENTORY: '/etc/ansible/hosts'
+        ANSIBLE_PLAYBOOK: 'insurance.yaml'
+        SSH_KEY: ${{ secrets.SSH_KEY }}
+      run: |
+        echo "${SSH_KEY}" > /tmp/ansible_key
+        ansible-playbook -i $ANSIBLE_INVENTORY $ANSIBLE_PLAYBOOK --private-key /tmp/ansible_key
